@@ -17,9 +17,12 @@ This program will generate all kind of outputs in an IDL sav format and/or in AS
 
 * Dependencies: There is many IDL library dependencies. I am not sure all those required have been provided here. If any issues, contact me and I will see if I can help.
 
-* No exhaustive documentation is yet available. Here below I give very quick overview of the inputs to be set:
-   dosavfilesonly=0 ; Default, you do everything from sav file until synthese files and plots 
-   
+* No exhaustive documentation is yet available. 
+Here below I give very quick overview of the inputs to be set:
+
+1. You need to copy the getmodel and bin2txt program into the cpp_prg subdirectory.  Those files are generated when compiling TACMCMC-C++.
+2. You need to setup  directories and options of the 'iterative_PostMCMC_MS_Global' procedure. Here are the key parameters to set:
+    
 	- Directory containing the binary output files for all the objects that you wish to be processed:
     	dir_outputs='/home/obenomar/Pro/PSM_WP128_Sept2018/Raw_Results/TAMCMC-C/Data/Outputs/'
     	
@@ -31,7 +34,7 @@ This program will generate all kind of outputs in an IDL sav format and/or in AS
     	
     - Name of the model that was used to perform the fit of the data (must be same as the one used in TAMCMC-C++).
     
-    	modelname='model_MS_Global_a1etaa3_HarveyLike'
+    - modelname='model_MS_Global_a1etaa3_HarveyLike'
 
 
 ### Contribution guidelines ###
