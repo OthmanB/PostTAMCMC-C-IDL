@@ -34,8 +34,7 @@ Here below I give very quick overview of the inputs to be set:
     	dir_out='/home/obenomar/Pro/PSM_WP128_Sept2018/Level1/'
     	
     - Name of the model that was used to perform the fit of the data (must be same as the one used in TAMCMC-C++).
-    
-    - modelname='model_MS_Global_a1etaa3_HarveyLike'
+        modelname='model_MS_Global_a1etaa3_HarveyLike'
 
 
 ### Contribution guidelines ###
