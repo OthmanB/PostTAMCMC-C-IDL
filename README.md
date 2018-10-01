@@ -10,7 +10,7 @@ This program will generate all kind of outputs in an IDL sav format and/or in AS
 * Plots for the best fit, residuals, echelle diagram and correlation maps..
 * Results for the evidence, pdfs, etc.. 
 
-* Current version is compatible with TAMCMC C++ version 1.3.2 or below.
+Current version is compatible with TAMCMC C++ version 1.3.2 or below.
 
 ### How do I get set up? ###
 
