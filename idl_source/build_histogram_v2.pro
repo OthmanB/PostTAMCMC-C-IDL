@@ -41,7 +41,6 @@ smooth_coef=1
 if show_stats eq 1 then begin
 		tab_critere=[2.25,16,50,84,97.75] ; defini les mediane +/- 2sigma,mediane, mediane +/- 1sigma
 
-
 		stats=estimate_1_sigma_error( hist[0,*],hist[1,*],68.3,2,tab_critere)
 
 		b_max=interpol(smooth(hist[1,*],smooth_coef), hist[0,*], stats[6])
@@ -505,6 +504,8 @@ end
 pro show_hist_a1_a2_a3_mag_asym_inc_matrix, a1, inc, a2=a2, a3=a3, mag_b=mag_b, mag_alfa=mag_alfa, asym=asym, extra=extra, dir_out, name_out
 	
 
+  print, extra
+
   if n_elements(spectro_vsini) eq 0 then spectro_inc_rot=-1 else spectro_inc_rot=spectro_vsini
   
   tab_critere=[2.25,16,50,84,97.75]
@@ -613,10 +614,16 @@ pro show_hist_a1_a2_a3_mag_asym_inc_matrix, a1, inc, a2=a2, a3=a3, mag_b=mag_b, 
   endfor
 
 	if n_elements(extra) ne 0 then begin
-		hist_extra=build_histogram(extra, 4.1*N2, normalize=1)
-		err_extra=estimate_1_sigma_error(hist[0,*],hist[1,*],68.3,2,tab_critere)
-		label_extra='a2'
-	endif else begin
+    if extra[0] ne 0 then begin
+		  hist_extra=build_histogram(extra, 4.1*N2, normalize=1)
+		  err_extra=estimate_1_sigma_error(hist[0,*],hist[1,*],68.3,2,tab_critere)
+		  label_extra='a2'
+	  endif else begin
+      hist_extra=dblarr(2, 10)
+      err_extra=dblarr(8)
+      label_extra=''
+    endelse
+  endif else begin
 		hist_extra=dblarr(2, 10)
 		err_extra=dblarr(8)
 		label_extra=''
@@ -691,7 +698,7 @@ pro show_hist_a1_a2_a3_mag_asym_inc_matrix, a1, inc, a2=a2, a3=a3, mag_b=mag_b, 
 		posplots[1,*]=[0,3,2,1];[0,2,1,3]
 		;posplots[1,*]=[0,1,2,3]
 	endif
-        smoothcoef=2
+  smoothcoef=2
 	plot_fullhist_2D_MATRIX_Nd_v2, xhists_2dshow, hists_2dshow, hists, errs, labels, $
 		ranges=ranges, smoothcoef, lines=lines, spectro_inc_rot=spectro_inc_rot, $
 		legend_precision=legend_precision, posplots=posplots, hist_extra=hist_extra, err_extra=err_extra, label_extra=label_extra

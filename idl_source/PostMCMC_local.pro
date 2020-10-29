@@ -11,7 +11,8 @@
 @MS_echellediagram
 @synthese2stddev
 @MS_Global_fitplot
-@MS_Global_rotinc_correlations
+;@MS_Global_rotinc_correlations
+@local_rotinc_correlations
 @ascii2sav
 @estimate_1_sigma_error
 ;@/home/ob19/Programs/IDL_library/mes_routines/kepler/read_ascii_kepler.pro
@@ -20,7 +21,7 @@
 @draw_boxandwiskers.pro
 ;Post Processing for TAMCMC-C
 ; Version 1.3.2b : Compatible with TAMCMC-C version 1.3.2 and below
-pro iterative_PostMCMC_MS_Global;, dir_outputs, dir_inputs
+pro iterative_PostMCMC_Local;, dir_outputs, dir_inputs
 
    
    dosavfilesonly=0 ; Default, you do everything from sav file until synthese files and plots 
@@ -29,25 +30,28 @@ pro iterative_PostMCMC_MS_Global;, dir_outputs, dir_inputs
     OS=''
     ;if OS eq 'Mac' then dir_os='/Volumes/MCMC_RES/'
     ;if OS eq 'Linux' then dir_os='/home/obenomar/MCMC_RES/'
-    dir_os=''
-    dir_outputs=dir_os + '/Volumes/docker/ryzen3900x/P1.14-P2.26/TAMCMC-C-dev/data/outputs/'
-    dir_inputs=dir_os + '/Volumes/docker/ryzen3900x/P1.14-P2.26/TAMCMC-C-dev/data/inputs/'
-    dir_out=dir_os + '/Volumes/home/2020/P1.14-P2.26/DATA/results/level1/'
-    modelname='model_MS_Global_a1etaa3_HarveyLike'
+    dir_OS=''
 
-    ;modelname='model_MS_Global_a1etaa3_HarveyLike'
-    ;modelname='model_MS_Global_a1nl_etaa3_HarveyLike'
-    ;modelname='model_MS_Global_a1n_etaa3_HarveyLike'
-    ;modelname='model_Evolved_Global_a1etaa3_l1mixed'
+    ;dir_outputs=dir_os + '/Volumes/home/2020/RGB-depressed/Level2/pass2/TAMCMC-C-1.4.3-dev/data/outputs/'
+    ;dir_inputs=dir_os + '/Volumes/home/2020/RGB-depressed/Level2/pass2/TAMCMC-C-1.4.3-dev/data/inputs/'
+    ;dir_out=dir_os + '/Volumes/home/2020/RGB-depressed/Level2/pass2/postmcmc/'
+    ;dir_outputs=dir_os + '/Volumes/home/2020/RGB-depressed/Level2/pass3/TAMCMC-C-1.4.3-dev/data/outputs/'
+    ;dir_inputs=dir_os + '/Volumes/home/2020/RGB-depressed/Level2/pass3/TAMCMC-C-1.4.3-dev/data/inputs/'
+    ;dir_out=dir_os + '/Volumes/home/2020/RGB-depressed/Level2/pass3/postmcmc/'
+	dir_outputs=dir_os + '/Volumes/home/2020/RGB-depressed/Level2/pass4/TAMCMC-C-1.4.3-dev/data/outputs/'
+    dir_inputs=dir_os + '/Volumes/home/2020/RGB-depressed/Level2/pass4/TAMCMC-C-1.4.3-dev/data/inputs/'
+    dir_out=dir_os + '/Volumes/home/2020/RGB-depressed/Level2/pass4/postmcmc/'
+;	dir_outputs=dir_os + '/Volumes/home/2020/RGB-depressed/Level2/pass5/TAMCMC-C-1.4.31-dev-EXP/data/outputs/'
+;    dir_inputs=dir_os + '/Volumes/home/2020/RGB-depressed/Level2/pass5/TAMCMC-C-1.4.31-dev-EXP/data/inputs/'
+;    dir_out=dir_os + '/Volumes/home/2020/RGB-depressed/Level2/pass5/postmcmc/'
+
+    modelname='model_MS_local_basic'
 
     dir_filter='*' ; Used to choose which directory should be processed
-    ;dir_filter='kplr010963065*'
-    ;phase='B*'
     phase='A*'
-    ;phase='L*'
     Nb_classes=100.;
     index0=000. ; index of the first entry that is kept
-    keep_period=50. ; Keep 1 out of keep_period
+    keep_period=10. ; Keep 1 out of keep_period
  	
     dirs=file_search(dir_outputs + dir_filter) ; lists the directories
     Ndirs=n_elements(dirs)
@@ -59,14 +63,16 @@ pro iterative_PostMCMC_MS_Global;, dir_outputs, dir_inputs
     endfor
     print, "type '.cont' to proceed"
     stop
-    ;for i=long(i0), Ndirs-1 do begin
-    for i=1, Ndirs-2 do begin
+    for i=long(i0), Ndirs-1 do begin
+    ;for i=14, Ndirs-1 do begin
     	print, '    ------- Processing ' + dirs[i] + ' --------'    
     	b=byte(dirs[i])
     	pos=max(where(b eq 47 OR b eq 92)) ; detect slashes
         if pos[0] eq -1 then starID=dirs[i] else starID=strtrim(b[pos+1:*], 2)
-        ;stop
-    	done=PostMCMC_MS_Global_v2(dir_outputs, dir_inputs, dir_out, modelname, starID, phase, Nb_classes, index0, keep_period, dosavfilesonly)
+        Nslices=n_elements(file_search(dirs[i] + '/outputs/' + starID + '_*_' + phase + 'params.hdr' ))
+        for slice=long(1), Nslices do begin
+    		done=PostMCMC_Local_extract_data(dir_outputs, dir_inputs, dir_out, modelname, starID, phase, strtrim(slice,2), Nb_classes, index0, keep_period, dosavfilesonly)
+    	endfor
     	print, '    -------------------------------------------'
 	OK[i]=done
 	endfor
@@ -82,6 +88,102 @@ pro iterative_PostMCMC_MS_Global;, dir_outputs, dir_inputs
 		endif
 	endelse
 end
+
+
+; Used to interpret the results from all Local models
+; starID: the id as define in the config_presets.cfg
+; phase: phase (B, L, A) as defined in the config_presets.cfg
+; Nb_classes: Number of classes for the histograms (default = 200)
+; index0: first index for the kept samples (default = 0)
+; keep_period: periodicity for the the kept samples (default = 1  ==> all samples are kept)
+; delete_txt_outputs: if 1, deletes the ascii files for the samples output files. Only sav files will be kepts (default = 0)
+function PostMCMC_Local_extract_data, root_outputs, root_inputs, dir_out, modelname, starID, phase, slice, Nb_classes, index0, keep_period, dosavfilesonly
+	done=1
+
+	subdir=''	
+	dir_bin2txt='cpp_prg/' ; directory where the function that converts binaries into ascii is.
+	dir_getmodel='cpp_prg/' ; directory where the function that generate the models is
+
+	; --- Defining the directory/files using the strict rule for managing inputs/outputs ----
+	dir_IDL_out=dir_out + starID + '_' + slice + '/'
+	binresultdir=root_outputs + starID + '/outputs/'
+	diagsdir=root_outputs  + starID + '/diags/'
+	root_filename=binresultdir + starID + '_' + slice + '_' + phase + '_params' ; here phase may contain and asterix
+	test=file_search(root_filename + '_chain-0.bin')
+	if test eq '' then begin
+		print, 'Could not find files compatible with requested phase'
+		print, 'Change the phase name. The program will stop now'
+		done=0
+		goto, bypass
+		stop
+	endif else begin
+		root_filename=detect_root_name(test) ; ensure that we use a valid root_filename
+	endelse
+	;stop
+	data_file=file_search(root_inputs + starID + '.data' )
+	if data_file eq '' then begin
+			print, 'Warning: Input data file not found.' 
+			print, 'Check that the given directory and file exist'
+			print, 'The program will stop now'
+			stop
+	endif
+	
+	check_dir=file_search(binresultdir) ; check if the dir has no capital letter
+	if check_dir[0] eq '' then begin
+			print, 'Warning: Output data files not found in the specified directory.' 
+			print, 'Check that you provided the correct output directory'
+			print, 'The program will stop now'
+			stop
+	endif
+	
+	f=file_search(dir_IDL_out + '')
+	if f[0] eq '' then spawn, 'mkdir ' + dir_IDL_out + ''
+
+	; ----- Convert binary files in text files, easier to read by IDL AND plot their pdf using nice1D_hist ----
+	print, 'Convert binary files in text files and then into sav files, easier to read by IDL and plot their pdf...'
+	f=file_search(dir_IDL_out + 'Files/')
+	if f[0] eq '' then spawn, 'mkdir ' + dir_IDL_out + 'Files/'	
+	hists_info=histograms_bin2txt_params(dir_IDL_out+'Files/',  Nb_classes, root_filename, dir_bin2txt,  modelname,index0=index0, keep_period=keep_period)
+	Nsamples=hists_info.Nsamples
+
+	stat_synthese_unsorted=hists_info.stat_synthese_unsorted	
+
+	; ---- Extract the value of parameters_length ----
+	parameters_length=read_plength(dir_IDL_out +'Files/plength.txt')
+	Nmax=parameters_length[0]
+	lmax=3 ;parameters_length[1]
+	Nf_ls=parameters_length[2:5] ; Nfl0, Nfl1, Nfl2, Nfl3
+	ind0_nu=total(parameters_length[0:1])
+	ind0_split=total(parameters_length[0:5])
+	ind0_W=total(parameters_length[0:6])
+	ind0_inc=total(parameters_length[0:8])
+	ind0_trunc=total(parameters_length[0:9])
+	
+
+	; ---- Determine the Global Likelihood -----
+	print, 'Evidence is assumed to be calculated by the CPP program: copy of the file in the IDL output directory...'
+	if phase eq 'B*' then ph='B'
+	if phase eq 'L*' then ph='L'
+	if phase eq 'A*' then ph='A'
+
+	spawn, 'cp ' + diagsdir + starID + '_' + slice + '_' + ph + '_evidence.txt ' + dir_IDL_out + starID + '_' + slice + '_' + ph + '_evidence.txt'
+
+	; ---------- Plot of models ----
+	; Skipping it because the diags are already showing model + data
+
+	; --- NEED WORKING FROM HERE ----
+	
+	; ----- Correlation diagram for Rotation/Inclination -----
+	print, 'Plots for correlations between a1,a2,a3,asymetry, magnetic effects parametrisation and inclination...'
+	local_rotinc_correlations, parameters_length, dir_IDL_out +'Files/', dir_IDL_out, starID,0 ; can handle any number of correlation maps within the same plot
+	;stop
+	; ---- Save basic information on splitting and inclination in a text file ----
+	show_split_inc_asym, dir_IDL_out, modelname, stat_synthese_unsorted, ind0_split, ind0_W, ind0_inc,Nmax
+	bypass:
+	return, done
+end
+
+
 ; Used to interpret the results from all MS_Global models
 ; starID: the id as define in the config_presets.cfg
 ; phase: phase (B, L, A) as defined in the config_presets.cfg
@@ -299,12 +401,15 @@ function PostMCMC_MS_Global_v2, root_outputs, root_inputs, dir_out, modelname, s
 		print, 'Plots for correlations between a1,a2,a3,asymetry, magnetic effects parametrisation and inclination...'
 		MS_Global_rotinc_correlations, synthese_file, dir_IDL_out +'Files/', dir_IDL_out, starID,0 ; can handle any number of correlation maps within the same plot
 
+		stop
 		; ---- Save basic information on splitting and inclination in a text file ----
 		show_split_inc_asym, dir_IDL_out, modelname, stat_synthese_unsorted, ind0_split, ind0_W, ind0_inc,Nmax
 	endif ; endif for dosavfileonly
 	bypass:
 	return, done
 end
+
+
 
 ; A procedure that deal with the various situations specific to models
 pro show_split_inc_asym, dir_IDL_out, modelname, stat_synthese_unsorted, ind0_split, ind0_W, ind0_inc, Nmax

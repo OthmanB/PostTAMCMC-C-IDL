@@ -235,12 +235,16 @@ name_out=identifier + '_'
 if (stddev(a1p) ne 0 AND stddev(incp) ne 0) AND n_elements(a1p) gt 1 AND n_elements(incp) gt 1 then begin 
 	;show_hist_a1_a2_a3_mag_asym_inc_matrix, a1p, incp, a2=a2p, a3=a3p, mag_b=mag_bp, mag_alfa=mag_alfap, asym=asymp, extra=extra, posextra=posextra, dir_out, name_out ; all
 	;show_hist_a1_a2_a3_mag_asym_inc_matrix, a1p, incp, a2=a2p, a3=a3p, mag_b=mag_bp, mag_alfa=mag_alfap, asym=0, extra=extra, posextra=posextra, dir_out, name_out+'rotonly_' ; all except asymetry
+	;stop	
+	show_hist_a1_a2_a3_mag_asym_inc_matrix, a1p, incp, a2=0, a3=0, mag_b=0, mag_alfa=0, asym=0, extra=0, dir_out, name_out+'a1inconly_'  ; all except asymetry
 	show_hist_a1_a2_a3_mag_asym_inc_matrix, a1p, incp, a2=1d5 *beta0*3./(8. * !pi), a3=a3p, mag_b=mag_bp, mag_alfa=mag_alfap, asym=0, extra=1d5 *eta0a1*3./(8. * !pi), dir_out, name_out+'rotonly_'  ; all except asymetry
 	show_hist_a1_a2_a3_mag_asym_inc_matrix, a1p, incp, a2=1d5 *beta0*3./(8. * !pi), a3=a3p, mag_b=mag_bp, mag_alfa=mag_alfap, asym=asymp, extra=1d5 *eta0a1*3./(8. * !pi), dir_out, name_out ; all
 ;	show_hist_a1_a2_a3_mag_asym_inc_matrix, a1p, incp, a2=1d5 *beta0*3./(8. * !pi), a3=a3p, mag_b=mag_bp, mag_alfa=mag_alfap, asym=0, extra=1d5 *eta0a1*3./(8. * !pi), dir_out, name_out+'rotonly_' ; all except asymetry
 endif else print, 'No correlation diagram to show: a1 and/or inclination are fixed'
 
 end
+
+
 
 function format_filename, index, idl_format
 	if n_elements(idl_format) eq 0 then idl_format=0
